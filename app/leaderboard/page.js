@@ -10,6 +10,7 @@ export default function LeaderboardPage() {
   const [loading, setLoading]     = useState(true)
   const [profile, setProfile]     = useState(null)
   const [leaderboard, setLeaderboard] = useState([])
+  const [specialBets, setSpecialBets] = useState([])
   const [userId, setUserId]       = useState(null)
 
   useEffect(() => {
@@ -17,12 +18,14 @@ export default function LeaderboardPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setUserId(user.id)
-      const [profileRes, leaderRes] = await Promise.all([
+      const [profileRes, leaderRes, betsRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase.from('leaderboard').select('*'),
+        supabase.from('special_bets').select('user_id, bet_type, value'),
       ])
       setProfile(profileRes.data)
       setLeaderboard(leaderRes.data || [])
+      setSpecialBets(betsRes.data || [])
       setLoading(false)
     }
     load()
@@ -105,7 +108,7 @@ export default function LeaderboardPage() {
           </div>
         </div>
 
-        <LeaderboardTable rows={leaderboard} currentUserId={userId} />
+        <LeaderboardTable rows={leaderboard} currentUserId={userId} specialBets={specialBets} />
       </main>
     </>
   )

@@ -1,4 +1,4 @@
-export default function LeaderboardTable({ rows, currentUserId }) {
+export default function LeaderboardTable({ rows, currentUserId, specialBets = [] }) {
   if (!rows || rows.length === 0) {
     return (
       <div className="text-center py-20 text-[#94A3B8]/40">
@@ -15,6 +15,8 @@ export default function LeaderboardTable({ rows, currentUserId }) {
       {rows.map((row, i) => {
         const isMe  = row.id === currentUserId
         const isTop = i < 3
+        const champion  = specialBets.find(b => b.user_id === row.id && b.bet_type === 'champion')?.value
+        const topScorer = specialBets.find(b => b.user_id === row.id && b.bet_type === 'top_scorer')?.value
 
         return (
           <div key={row.id}
@@ -54,6 +56,22 @@ export default function LeaderboardTable({ rows, currentUserId }) {
                   ✓ {row.direction_count} כיוון
                 </span>
               </div>
+              {(champion || topScorer) && (
+                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                  {champion && (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-lg truncate max-w-[110px]"
+                      style={{ background:'rgba(250,204,21,0.10)', color:'rgba(250,204,21,0.70)', border:'1px solid rgba(250,204,21,0.18)' }}>
+                      🏆 {champion}
+                    </span>
+                  )}
+                  {topScorer && (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-lg truncate max-w-[110px]"
+                      style={{ background:'rgba(99,102,241,0.10)', color:'rgba(139,92,246,0.80)', border:'1px solid rgba(99,102,241,0.20)' }}>
+                      👟 {topScorer}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Points */}
