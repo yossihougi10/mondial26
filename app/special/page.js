@@ -142,7 +142,7 @@ export default function SpecialPage() {
       const [profileRes, matchRes, betsRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase.from('matches').select('home_team_name, away_team_name').limit(200),
-        fetch('/api/special-bets').then(r => r.json()),
+        supabase.from('special_bets').select('*, profiles(display_name)').order('created_at', { ascending: true }),
       ])
 
       setProfile(profileRes.data)
@@ -156,10 +156,10 @@ export default function SpecialPage() {
         setTeams([...teamSet].sort((a, b) => a.localeCompare(b, 'he')))
       }
 
-      if (betsRes.bets) {
-        setAllBets(betsRes.bets)
+      if (betsRes.data) {
+        setAllBets(betsRes.data)
         const mine = {}
-        betsRes.bets.filter(b => b.user_id === user.id).forEach(b => { mine[b.bet_type] = b.value })
+        betsRes.data.filter(b => b.user_id === user.id).forEach(b => { mine[b.bet_type] = b.value })
         setMyBets(mine)
       }
       setLoading(false)
@@ -170,13 +170,11 @@ export default function SpecialPage() {
   async function saveBet(betType, value) {
     if (!value?.trim()) return
     setSaving(s => ({ ...s, [betType]: true }))
-    const res = await fetch('/api/special-bets', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bet_type: betType, value: value.trim() }),
-    })
-    const data = await res.json()
-    if (data.success) {
+    const { error } = await supabase.from('special_bets').upsert(
+      { user_id: userId, bet_type: betType, value: value.trim(), updated_at: new Date().toISOString() },
+      { onConflict: 'user_id,bet_type' }
+    )
+    if (!error) {
       setMyBets(b => ({ ...b, [betType]: value.trim() }))
       setAllBets(prev => {
         const without = prev.filter(b => !(b.user_id === userId && b.bet_type === betType))
