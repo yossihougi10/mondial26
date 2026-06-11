@@ -23,120 +23,88 @@ export default function Navbar({ profile, onSyncMatches }) {
     try {
       const res = await fetch('/api/matches/sync', { method: 'POST' })
       const data = await res.json()
-      if (data.success) {
-        onSyncMatches?.()
-        alert(`סונכרנו ${data.matchCount} משחקים`)
-      }
-    } catch {
-      alert('שגיאה בסנכרון')
-    }
+      if (data.success) { onSyncMatches?.(); alert(`✅ סונכרנו ${data.matchCount} משחקים`) }
+    } catch { alert('שגיאה בסנכרון') }
     setSyncing(false)
   }
 
   const navLinks = [
-    { href: '/dashboard', label: 'לוח משחקים', icon: '⚽' },
+    { href: '/dashboard', label: 'משחקים', icon: '⚽' },
     { href: '/leaderboard', label: 'דירוג', icon: '🏆' },
+    ...(profile?.is_admin ? [{ href: '/admin', label: 'אדמין', icon: '⚙️' }] : []),
   ]
 
-  if (profile?.is_admin) {
-    navLinks.push({ href: '/admin', label: 'אדמין', icon: '⚙️' })
-  }
-
   return (
-    <nav className="bg-green-800 text-white shadow-lg sticky top-0 z-50">
-      <div className="max-w-4xl mx-auto px-4">
+    <nav style={{ background: 'rgba(8,12,24,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+      className="sticky top-0 z-50">
+      <div className="max-w-3xl mx-auto px-4">
         <div className="flex items-center justify-between h-14">
           {/* לוגו */}
-          <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg">
-            <span>⚽</span>
-            <span className="hidden sm:block">מונדיאל 2026</span>
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <span className="text-2xl">⚽</span>
+            <span className="font-black text-white hidden sm:block tracking-tight">
+              מונדיאל <span className="gradient-text">2026</span>
+            </span>
           </Link>
 
           {/* ניווט דסקטופ */}
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map(link => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              <Link key={link.href} href={link.href}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                   pathname === link.href
-                    ? 'bg-white/20 text-white'
-                    : 'text-green-100 hover:bg-white/10'
-                }`}
-              >
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                    : 'text-white/60 hover:text-white hover:bg-white/8'
+                }`}>
                 <span>{link.icon}</span>
                 <span>{link.label}</span>
               </Link>
             ))}
           </div>
 
-          {/* ימין - משתמש */}
+          {/* ימין */}
           <div className="flex items-center gap-2">
             {profile?.is_admin && (
-              <button
-                onClick={handleSync}
-                disabled={syncing}
-                className="hidden sm:flex items-center gap-1 text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors"
-              >
-                <span>{syncing ? '⏳' : '🔄'}</span>
-                <span>{syncing ? 'מסנכרן...' : 'סנכרן'}</span>
+              <button onClick={handleSync} disabled={syncing}
+                className="hidden sm:flex items-center gap-1.5 text-xs bg-white/8 hover:bg-white/15 border border-white/10 px-3 py-1.5 rounded-lg text-white/70 hover:text-white transition-all">
+                <span className={syncing ? 'animate-spin' : ''}>{syncing ? '⏳' : '🔄'}</span>
+                <span>סנכרן</span>
               </button>
             )}
-
-            <span className="hidden sm:block text-sm text-green-200">
-              {profile?.display_name}
-            </span>
-
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-white/10"
-            >
+            <div className="hidden sm:flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg">
+              <span className="text-sm text-white/70 font-medium">{profile?.display_name}</span>
+            </div>
+            <button onClick={() => setMenuOpen(!menuOpen)}
+              className="md:hidden p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/8 transition-all">
               <span className="text-xl">{menuOpen ? '✕' : '☰'}</span>
             </button>
-
-            <button
-              onClick={handleLogout}
-              className="hidden md:block text-xs text-green-300 hover:text-white transition-colors"
-            >
+            <button onClick={handleLogout}
+              className="hidden md:block text-xs text-white/30 hover:text-white/70 transition-colors px-2">
               יציאה
             </button>
           </div>
         </div>
 
-        {/* תפריט מובייל */}
+        {/* מובייל */}
         {menuOpen && (
-          <div className="md:hidden py-3 border-t border-green-700 space-y-1">
+          <div className="md:hidden py-3 border-t border-white/8 space-y-1">
             {navLinks.map(link => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg font-medium ${
-                  pathname === link.href
-                    ? 'bg-white/20'
-                    : 'text-green-100 hover:bg-white/10'
-                }`}
-              >
-                <span>{link.icon}</span>
-                <span>{link.label}</span>
+              <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)}
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl font-medium transition-all ${
+                  pathname === link.href ? 'bg-green-500/20 text-green-400' : 'text-white/60 hover:text-white hover:bg-white/8'
+                }`}>
+                <span>{link.icon}</span><span>{link.label}</span>
               </Link>
             ))}
-
             {profile?.is_admin && (
-              <button
-                onClick={() => { handleSync(); setMenuOpen(false) }}
-                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-green-100 hover:bg-white/10"
-              >
-                <span>🔄</span>
-                <span>סנכרן משחקים</span>
+              <button onClick={() => { handleSync(); setMenuOpen(false) }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-white/60 hover:text-white hover:bg-white/8 transition-all">
+                <span>🔄</span><span>סנכרן משחקים</span>
               </button>
             )}
-
-            <div className="flex items-center justify-between px-3 pt-2 border-t border-green-700 mt-2">
-              <span className="text-sm text-green-200">{profile?.display_name}</span>
-              <button onClick={handleLogout} className="text-sm text-green-300 hover:text-white">
-                יציאה
-              </button>
+            <div className="flex items-center justify-between px-3 pt-3 mt-2 border-t border-white/8">
+              <span className="text-sm text-white/50">{profile?.display_name}</span>
+              <button onClick={handleLogout} className="text-sm text-white/40 hover:text-red-400 transition-colors">יציאה</button>
             </div>
           </div>
         )}
