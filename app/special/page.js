@@ -174,7 +174,10 @@ export default function SpecialPage() {
       { user_id: userId, bet_type: betType, value: value.trim(), updated_at: new Date().toISOString() },
       { onConflict: 'user_id,bet_type' }
     )
-    if (!error) {
+    if (error) {
+      console.error('special_bets upsert error:', error)
+      alert('שגיאה בשמירה: ' + error.message)
+    } else {
       setMyBets(b => ({ ...b, [betType]: value.trim() }))
       setAllBets(prev => {
         const without = prev.filter(b => !(b.user_id === userId && b.bet_type === betType))
