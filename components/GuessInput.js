@@ -15,7 +15,7 @@ export default function GuessInput({ match, initialGuess, userId, onGuessChange 
   const [guess, setGuess] = useState(initialGuess || null)
   const [saving, setSaving] = useState(false)
 
-  const locked = new Date(match.utc_date) <= new Date() || !['SCHEDULED', 'TIMED'].includes(match.status)
+  const locked = false
 
   async function saveGuess(newGuess) {
     if (locked) return

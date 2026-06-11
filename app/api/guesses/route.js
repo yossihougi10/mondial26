@@ -28,20 +28,6 @@ export async function POST(request) {
 
   if (!match_id) return Response.json({ error: 'Missing match_id' }, { status: 400 })
 
-  // בדוק שהמשחק לא התחיל
-  const { data: match } = await supabase
-    .from('matches')
-    .select('utc_date, status')
-    .eq('id', match_id)
-    .single()
-
-  if (!match) return Response.json({ error: 'Match not found' }, { status: 404 })
-
-  const isStarted = new Date(match.utc_date) <= new Date() || match.status !== 'SCHEDULED'
-  if (isStarted) {
-    return Response.json({ error: 'המשחק כבר התחיל - לא ניתן לשנות ניחוש' }, { status: 403 })
-  }
-
   const { error } = await supabase.from('guesses').upsert(
     {
       user_id: user.id,
