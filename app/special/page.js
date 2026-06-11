@@ -168,14 +168,26 @@ export default function SpecialPage() {
   }, []) // eslint-disable-line
 
   async function saveBet(betType, value) {
-    if (!value?.trim()) return
+    if (!value?.trim() || !userId) return
     setSaving(s => ({ ...s, [betType]: true }))
-    const { error } = await supabase.from('special_bets').upsert(
-      { user_id: userId, bet_type: betType, value: value.trim(), updated_at: new Date().toISOString() },
-      { onConflict: 'user_id,bet_type' }
-    )
+
+    const { data: existing } = await supabase.from('special_bets')
+      .select('id').eq('user_id', userId).eq('bet_type', betType).maybeSingle()
+
+    let error
+    if (existing) {
+      const res = await supabase.from('special_bets')
+        .update({ value: value.trim(), updated_at: new Date().toISOString() })
+        .eq('user_id', userId).eq('bet_type', betType)
+      error = res.error
+    } else {
+      const res = await supabase.from('special_bets')
+        .insert({ user_id: userId, bet_type: betType, value: value.trim() })
+      error = res.error
+    }
+
     if (error) {
-      console.error('special_bets upsert error:', error)
+      console.error('special_bets save error:', error)
       alert('שגיאה בשמירה: ' + error.message)
     } else {
       setMyBets(b => ({ ...b, [betType]: value.trim() }))
