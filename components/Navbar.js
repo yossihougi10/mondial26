@@ -30,6 +30,7 @@ export default function Navbar({ profile, onSyncMatches }) {
 
   const navLinks = [
     { href: '/dashboard', label: 'משחקים', icon: '⚽' },
+    { href: '/special', label: 'בחירות מיוחדות', icon: '⭐' },
     { href: '/leaderboard', label: 'דירוג', icon: '🏆' },
     ...(profile?.is_admin ? [{ href: '/admin', label: 'אדמין', icon: '⚙️' }] : []),
   ]

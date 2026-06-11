@@ -2,10 +2,10 @@
 
 import Image from 'next/image'
 import GuessInput from './GuessInput'
-import { isGroupStage, getResultTypeLabel } from '@/lib/scoring'
+import { getResultTypeLabel } from '@/lib/scoring'
 
 const STAGE_LABELS = {
-  GROUP_STAGE: 'שלב הבתים', ROUND_OF_32: 'שמינית גמר', ROUND_OF_16: 'שמינית גמר',
+  GROUP_STAGE: 'שלב הבתים', ROUND_OF_32: 'שלב 32', ROUND_OF_16: 'שמינית גמר',
   QUARTER_FINALS: 'רבע גמר', SEMI_FINALS: 'חצי גמר', THIRD_PLACE: 'גמר 3/4', FINAL: 'גמר 🏆',
 }
 
@@ -29,7 +29,6 @@ export default function MatchCard({ match, userGuess, allGuesses, profiles, user
   const isLive = match.status === 'IN_PLAY' || match.status === 'PAUSED'
   const isFinished = match.status === 'FINISHED'
   const isStarted = isLive || isFinished
-  const groupStage = isGroupStage(match.stage)
 
   const matchTime = new Date(match.utc_date).toLocaleTimeString('he-IL', {
     hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem',
@@ -46,7 +45,6 @@ export default function MatchCard({ match, userGuess, allGuesses, profiles, user
 
   return (
     <div className={`glass rounded-2xl border ${cardBorder} shadow-xl transition-all overflow-hidden`}>
-      {/* Live stripe */}
       {isLive && <div className="h-0.5 bg-gradient-to-r from-red-500 via-orange-400 to-red-500" />}
 
       {/* Header */}
@@ -67,7 +65,6 @@ export default function MatchCard({ match, userGuess, allGuesses, profiles, user
       {/* Match */}
       <div className="px-4 py-4">
         <div className="flex items-center gap-3">
-          {/* בית */}
           <div className="flex items-center gap-2.5 flex-1 min-w-0">
             <TeamFlag crest={match.home_team_crest} name={match.home_team_name} />
             <span className="font-bold text-white text-sm leading-tight truncate">
@@ -75,7 +72,6 @@ export default function MatchCard({ match, userGuess, allGuesses, profiles, user
             </span>
           </div>
 
-          {/* תוצאה */}
           <div className="text-center shrink-0">
             {isStarted ? (
               <div className={`text-3xl font-black tracking-tight ${isLive ? 'text-white' : 'text-white/90'}`}>
@@ -91,7 +87,6 @@ export default function MatchCard({ match, userGuess, allGuesses, profiles, user
             )}
           </div>
 
-          {/* אורח */}
           <div className="flex items-center gap-2.5 flex-1 min-w-0 justify-end">
             <span className="font-bold text-white text-sm leading-tight truncate text-end">
               {match.away_team_short || match.away_team_name}
@@ -105,12 +100,11 @@ export default function MatchCard({ match, userGuess, allGuesses, profiles, user
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs text-white/30 shrink-0 mt-1">הניחוש שלי</span>
             <div className="flex-1">
-              <GuessInput match={match} initialGuess={formatGuess(userGuess, groupStage)}
+              <GuessInput match={match} initialGuess={formatGuess(userGuess)}
                 userId={userId} onGuessChange={onGuessChange} />
             </div>
           </div>
 
-          {/* ניקוד */}
           {isFinished && userScore !== undefined && (
             <div className="flex items-center gap-2 mt-2.5">
               {userScore ? (
@@ -133,9 +127,11 @@ export default function MatchCard({ match, userGuess, allGuesses, profiles, user
             {allGuesses.map(g => {
               const profile = profiles?.find(p => p.id === g.user_id)
               const name = profile?.display_name || '?'
-              const guessText = groupStage
-                ? (g.prediction || '—')
-                : g.predicted_home_score !== null ? `${g.predicted_home_score}:${g.predicted_away_score}` : '—'
+              const guessText = g.prediction
+                ? g.prediction
+                : (g.predicted_home_score !== null && g.predicted_home_score !== undefined)
+                  ? `${g.predicted_home_score}:${g.predicted_away_score}`
+                  : '—'
               const isMe = g.user_id === userId
               return (
                 <div key={g.id}
@@ -158,9 +154,11 @@ export default function MatchCard({ match, userGuess, allGuesses, profiles, user
   )
 }
 
-function formatGuess(guess, groupStage) {
+function formatGuess(guess) {
   if (!guess) return null
-  if (groupStage) return { prediction: guess.prediction }
-  return { home: guess.predicted_home_score, away: guess.predicted_away_score,
-    predicted_home_score: guess.predicted_home_score, predicted_away_score: guess.predicted_away_score }
+  return {
+    prediction: guess.prediction,
+    predicted_home_score: guess.predicted_home_score,
+    predicted_away_score: guess.predicted_away_score,
+  }
 }
