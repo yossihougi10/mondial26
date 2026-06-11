@@ -7,10 +7,10 @@ import { createClient } from '@/lib/supabase/client'
 
 export default function LeaderboardPage() {
   const supabase = createClient()
-  const [loading, setLoading] = useState(true)
-  const [profile, setProfile] = useState(null)
+  const [loading, setLoading]     = useState(true)
+  const [profile, setProfile]     = useState(null)
   const [leaderboard, setLeaderboard] = useState([])
-  const [userId, setUserId] = useState(null)
+  const [userId, setUserId]       = useState(null)
 
   useEffect(() => {
     async function load() {
@@ -31,37 +31,57 @@ export default function LeaderboardPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-6xl" style={{ animation: 'float 1s ease-in-out infinite' }}>⚽</div>
+        <div className="text-6xl" style={{ animation:'float 1s ease-in-out infinite' }}>🏆</div>
       </div>
     )
   }
 
   const myRank = leaderboard.findIndex(r => r.id === userId) + 1
-  const myRow = leaderboard.find(r => r.id === userId)
+  const myRow  = leaderboard.find(r => r.id === userId)
 
   return (
     <>
       <Navbar profile={profile} />
-      <main className="max-w-2xl mx-auto px-3 py-5">
-        <h1 className="text-2xl font-black text-white mb-5">🏆 טבלת דירוג</h1>
+      <main className="max-w-2xl mx-auto px-3 py-6">
 
-        {/* כרטיס המיקום שלי */}
+        {/* ── Header ───────────────────────────────── */}
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="text-[26px] font-black text-white leading-tight">טבלת דירוג</h1>
+            <p className="text-sm font-medium mt-0.5" style={{ color:'#94A3B8' }}>
+              עמדו בתחרות עם החברים
+            </p>
+          </div>
+          <div className="text-4xl mt-1">🏆</div>
+        </div>
+
+        {/* ── My rank card ─────────────────────────── */}
         {myRow && (
-          <div className="rounded-2xl p-5 mb-6 relative overflow-hidden"
-            style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.2), rgba(16,185,129,0.1))', border: '1px solid rgba(34,197,94,0.3)' }}>
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent pointer-events-none" />
-            <div className="relative flex items-center justify-between">
+          <div className="rounded-[20px] p-5 mb-5 relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, rgba(34,197,94,0.14) 0%, rgba(16,185,129,0.07) 100%)',
+              border: '1px solid rgba(34,197,94,0.30)',
+              boxShadow: '0 0 32px rgba(34,197,94,0.08)',
+            }}>
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/8 to-transparent pointer-events-none" />
+            <div className="relative flex items-center justify-between gap-4">
               <div>
-                <p className="text-green-400/70 text-sm mb-1">המיקום שלי</p>
-                <p className="text-4xl font-black mb-1">
-                  {myRank <= 3 ? ['🥇','🥈','🥉'][myRank-1] : `#${myRank}`}
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-green-400/60 mb-1.5">
+                  המיקום שלי
                 </p>
-                <p className="text-white font-bold text-lg">{myRow.display_name}</p>
+                <div className="flex items-center gap-3">
+                  <p className="text-[42px] font-black leading-none">
+                    {myRank <= 3 ? ['🥇','🥈','🥉'][myRank-1] : `#${myRank}`}
+                  </p>
+                  <p className="text-lg font-black text-white">{myRow.display_name}</p>
+                </div>
               </div>
-              <div className="text-end">
-                <p className="text-5xl font-black gradient-text">{myRow.total_points}</p>
-                <p className="text-green-400/60 text-sm mt-1">נקודות</p>
-                <div className="flex gap-3 mt-2 text-xs text-white/50">
+              <div className="text-end shrink-0">
+                <p className="text-[46px] font-black leading-none gradient-text">{myRow.total_points}</p>
+                <p className="text-[11px] font-medium mt-0.5" style={{ color:'rgba(34,197,94,0.55)' }}>
+                  נקודות
+                </p>
+                <div className="flex gap-3 mt-1.5 text-[11px] font-medium" style={{ color:'rgba(255,255,255,0.35)' }}>
                   <span>✓✓ {myRow.exact_count}</span>
                   <span>✓ {myRow.direction_count}</span>
                 </div>
@@ -70,15 +90,18 @@ export default function LeaderboardPage() {
           </div>
         )}
 
-        {/* מקרא */}
-        <div className="glass rounded-xl border border-white/8 p-3 mb-5 flex gap-4 text-xs text-white/50">
-          <div className="flex items-center gap-1.5">
-            <span className="bg-green-500/20 text-green-400 font-bold px-2 py-0.5 rounded-lg">3</span>
-            <span>תוצאה מדויקת</span>
+        {/* ── Scoring legend ───────────────────────── */}
+        <div className="flex gap-3 mb-5 px-4 py-3 rounded-2xl"
+          style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)' }}>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="font-black px-2.5 py-1 rounded-lg"
+              style={{ background:'rgba(34,197,94,0.18)', color:'#22C55E' }}>3</span>
+            <span style={{ color:'rgba(148,163,184,0.70)' }}>תוצאה מדויקת</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="bg-blue-500/20 text-blue-400 font-bold px-2 py-0.5 rounded-lg">1</span>
-            <span>כיוון נכון</span>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="font-black px-2.5 py-1 rounded-lg"
+              style={{ background:'rgba(59,130,246,0.18)', color:'#60A5FA' }}>1</span>
+            <span style={{ color:'rgba(148,163,184,0.70)' }}>כיוון נכון</span>
           </div>
         </div>
 

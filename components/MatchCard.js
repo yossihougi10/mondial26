@@ -5,100 +5,149 @@ import GuessInput from './GuessInput'
 import { getResultTypeLabel } from '@/lib/scoring'
 
 const STAGE_LABELS = {
-  GROUP_STAGE: 'שלב הבתים', ROUND_OF_32: 'שלב 32', ROUND_OF_16: 'שמינית גמר',
-  QUARTER_FINALS: 'רבע גמר', SEMI_FINALS: 'חצי גמר', THIRD_PLACE: 'גמר 3/4', FINAL: 'גמר 🏆',
+  GROUP_STAGE:   'שלב הבתים',
+  ROUND_OF_32:   'שלב 32',
+  ROUND_OF_16:   'שמינית גמר',
+  QUARTER_FINALS:'רבע גמר',
+  SEMI_FINALS:   'חצי גמר',
+  THIRD_PLACE:   'גמר 3/4',
+  FINAL:         '🏆 גמר',
 }
 
 function TeamFlag({ crest, name }) {
-  if (crest) {
-    return (
-      <div className="w-10 h-10 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center shrink-0">
-        <Image src={crest} alt={name} width={40} height={40} className="object-contain w-full h-full"
-          onError={e => { e.target.style.display = 'none' }} />
-      </div>
-    )
-  }
   return (
-    <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-xs font-bold text-white/50 shrink-0">
-      {name?.slice(0, 3).toUpperCase()}
+    <div className="w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center shrink-0"
+      style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.10)' }}>
+      {crest ? (
+        <Image src={crest} alt={name} width={44} height={44}
+          className="object-contain w-[80%] h-[80%]"
+          onError={e => { e.target.style.display='none' }} />
+      ) : (
+        <span className="text-xs font-black text-white/40">{name?.slice(0,3).toUpperCase()}</span>
+      )}
     </div>
   )
 }
 
+function ScoreBadge({ points, resultType }) {
+  const { text, color } = getResultTypeLabel(resultType)
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg ${color}`}>
+      +{points} נקודות · {text}
+    </span>
+  )
+}
+
 export default function MatchCard({ match, userGuess, allGuesses, profiles, userId, onGuessChange, userScore }) {
-  const isLive = match.status === 'IN_PLAY' || match.status === 'PAUSED'
+  const isLive     = match.status === 'IN_PLAY' || match.status === 'PAUSED'
   const isFinished = match.status === 'FINISHED'
-  const isStarted = isLive || isFinished
+  const isStarted  = isLive || isFinished
 
   const matchTime = new Date(match.utc_date).toLocaleTimeString('he-IL', {
-    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem',
+    hour:'2-digit', minute:'2-digit', timeZone:'Asia/Jerusalem',
   })
 
   const stageLabel = STAGE_LABELS[match.stage] || match.stage
-  const groupLabel = match.group_name ? ` · ${match.group_name.replace('GROUP_', 'קבוצה ')}` : ''
+  const groupLabel = match.group_name
+    ? ` · קבוצה ${match.group_name.replace('GROUP_', '')}`
+    : ''
 
-  const cardBorder = isLive
-    ? 'border-red-500/40 shadow-red-500/10'
-    : isFinished
-      ? 'border-white/8'
-      : 'border-white/10 hover:border-white/18'
+  // Card border/glow based on state
+  const cardStyle = isLive ? {
+    borderColor: 'rgba(239,68,68,0.45)',
+    boxShadow: '0 0 28px rgba(239,68,68,0.10), 0 8px 32px rgba(0,0,0,0.35)',
+  } : isFinished ? {
+    borderColor: 'rgba(255,255,255,0.08)',
+    boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+  } : {
+    borderColor: 'rgba(255,255,255,0.09)',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+  }
 
   return (
-    <div className={`glass rounded-2xl border ${cardBorder} shadow-xl transition-all overflow-hidden`}>
-      {isLive && <div className="h-0.5 bg-gradient-to-r from-red-500 via-orange-400 to-red-500" />}
+    <div className="glass rounded-[20px] border overflow-hidden transition-all duration-200 hover:translate-y-[-1px]"
+      style={{ ...cardStyle, borderWidth:'1px', borderStyle:'solid' }}>
 
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5" style={{ background: 'rgba(255,255,255,0.03)' }}>
-        <span className="text-xs text-white/35 font-medium">{stageLabel}{groupLabel}</span>
-        <div className="flex items-center gap-2">
-          {isLive && (
-            <div className="flex items-center gap-1.5">
-              <span className="live-dot w-2 h-2 bg-red-500 rounded-full inline-block" />
-              <span className="text-xs font-bold text-red-400">חי</span>
+      {/* Live top stripe */}
+      {isLive && (
+        <div className="h-[3px]"
+          style={{ background:'linear-gradient(90deg,transparent,#EF4444 30%,#F97316 70%,transparent)' }} />
+      )}
+
+      {/* ── Card header ──────────────────────────── */}
+      <div className="flex items-center justify-between px-4 py-2.5"
+        style={{ background:'rgba(255,255,255,0.025)', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+
+        <div className="flex items-center gap-1.5">
+          {isLive ? (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+              style={{ background:'rgba(239,68,68,0.15)', border:'1px solid rgba(239,68,68,0.30)' }}>
+              <span className="live-dot w-1.5 h-1.5 bg-red-500 rounded-full inline-block" />
+              <span className="text-[11px] font-black text-red-400 tracking-wide">חי</span>
             </div>
+          ) : isFinished ? (
+            <span className="text-[11px] font-semibold text-[#94A3B8]/60 px-2.5 py-1 rounded-full"
+              style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)' }}>
+              הסתיים
+            </span>
+          ) : (
+            <span className="text-[11px] font-mono font-bold text-[#94A3B8] flex items-center gap-1">
+              <span className="text-[9px] opacity-60">🕐</span>{matchTime}
+            </span>
           )}
-          {isFinished && <span className="text-xs text-white/30 bg-white/5 px-2 py-0.5 rounded-lg">הסתיים</span>}
-          {!isStarted && <span className="text-xs text-white/50 font-mono">{matchTime}</span>}
         </div>
+
+        <span className="text-[11px] font-medium text-[#94A3B8]/60">{stageLabel}{groupLabel}</span>
       </div>
 
-      {/* Match */}
-      <div className="px-4 py-4">
+      {/* ── Teams & Score ─────────────────────────── */}
+      <div className="px-5 py-5">
         <div className="flex items-center gap-3">
+
+          {/* Home */}
           <div className="flex items-center gap-2.5 flex-1 min-w-0">
             <TeamFlag crest={match.home_team_crest} name={match.home_team_name} />
-            <span className="font-bold text-white text-sm leading-tight truncate">
+            <span className="text-[15px] font-black text-white leading-tight truncate">
               {match.home_team_short || match.home_team_name}
             </span>
           </div>
 
-          <div className="text-center shrink-0">
+          {/* Score / VS */}
+          <div className="text-center shrink-0 px-1">
             {isStarted ? (
-              <div className={`text-3xl font-black tracking-tight ${isLive ? 'text-white' : 'text-white/90'}`}>
-                {match.home_score_full ?? '?'}<span className="text-white/30 mx-1">:</span>{match.away_score_full ?? '?'}
+              <div className="text-[36px] font-black leading-none tracking-tight"
+                style={{ color: isLive ? '#fff' : 'rgba(248,250,252,0.90)' }}>
+                {match.home_score_full ?? '?'}
+                <span className="text-white/20 mx-1.5 font-light">:</span>
+                {match.away_score_full ?? '?'}
               </div>
             ) : (
-              <div className="text-sm font-bold text-white/20 px-2">VS</div>
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-[11px] font-black tracking-[0.25em] text-white/15">VS</span>
+              </div>
             )}
             {isFinished && match.home_score_penalties !== null && (
-              <div className="text-xs text-white/30 text-center mt-0.5">
+              <div className="text-[10px] text-[#94A3B8]/50 text-center mt-1">
                 פנ' {match.home_score_penalties}:{match.away_score_penalties}
               </div>
             )}
           </div>
 
+          {/* Away */}
           <div className="flex items-center gap-2.5 flex-1 min-w-0 justify-end">
-            <span className="font-bold text-white text-sm leading-tight truncate text-end">
+            <span className="text-[15px] font-black text-white leading-tight truncate text-end">
               {match.away_team_short || match.away_team_name}
             </span>
             <TeamFlag crest={match.away_team_crest} name={match.away_team_name} />
           </div>
         </div>
 
-        {/* ניחוש */}
-        <div className="mt-4 pt-3 border-t border-white/6">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-white/30 shrink-0 mt-1">הניחוש שלי</span>
+        {/* ── Guess section ──────────────────────── */}
+        <div className="mt-4 pt-4" style={{ borderTop:'1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex items-start gap-3">
+            <span className="text-[11px] font-semibold text-[#94A3B8]/50 shrink-0 mt-[14px] leading-none">
+              הניחוש שלי
+            </span>
             <div className="flex-1">
               <GuessInput match={match} initialGuess={formatGuess(userGuess)}
                 userId={userId} onGuessChange={onGuessChange} />
@@ -106,27 +155,24 @@ export default function MatchCard({ match, userGuess, allGuesses, profiles, user
           </div>
 
           {isFinished && userScore !== undefined && (
-            <div className="flex items-center gap-2 mt-2.5">
-              {userScore ? (
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${getResultTypeLabel(userScore.result_type).color}`}>
-                  +{userScore.points} נקודות · {getResultTypeLabel(userScore.result_type).text}
-                </span>
-              ) : (
-                <span className="text-xs text-white/20">לא ניחשת</span>
-              )}
+            <div className="mt-2.5">
+              {userScore
+                ? <ScoreBadge points={userScore.points} resultType={userScore.result_type} />
+                : <span className="text-[11px] text-[#94A3B8]/40">לא ניחשת</span>
+              }
             </div>
           )}
         </div>
       </div>
 
-      {/* ניחושי חברים */}
+      {/* ── Friends' guesses ──────────────────────── */}
       {isStarted && allGuesses && allGuesses.length > 0 && (
-        <div className="px-4 pb-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <p className="text-xs text-white/30 pt-3 mb-2 font-medium">ניחושי כולם</p>
+        <div className="px-5 pb-5" style={{ borderTop:'1px solid rgba(255,255,255,0.05)' }}>
+          <p className="text-[11px] font-semibold text-[#94A3B8]/45 pt-3.5 mb-2.5">ניחושי כולם</p>
           <div className="grid grid-cols-2 gap-1.5">
             {allGuesses.map(g => {
-              const profile = profiles?.find(p => p.id === g.user_id)
-              const name = profile?.display_name || '?'
+              const p = profiles?.find(x => x.id === g.user_id)
+              const name = p?.display_name || '?'
               const guessText = g.prediction
                 ? g.prediction
                 : (g.predicted_home_score !== null && g.predicted_home_score !== undefined)
@@ -135,13 +181,18 @@ export default function MatchCard({ match, userGuess, allGuesses, profiles, user
               const isMe = g.user_id === userId
               return (
                 <div key={g.id}
-                  className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs transition-all ${
-                    isMe ? 'bg-green-500/15 border border-green-500/25' : 'bg-white/5 border border-white/6'
-                  }`}>
-                  <span className={`font-medium truncate ${isMe ? 'text-green-400' : 'text-white/60'}`}>
+                  className="flex items-center justify-between rounded-xl px-3 py-2 text-xs transition-all"
+                  style={isMe ? {
+                    background:'rgba(34,197,94,0.10)',
+                    border:'1px solid rgba(34,197,94,0.25)',
+                  } : {
+                    background:'rgba(255,255,255,0.04)',
+                    border:'1px solid rgba(255,255,255,0.07)',
+                  }}>
+                  <span className={`font-semibold truncate ${isMe ? 'text-green-400' : 'text-[#94A3B8]/70'}`}>
                     {isMe ? `${name} ✓` : name}
                   </span>
-                  <span className={`font-black mr-2 shrink-0 ${isMe ? 'text-green-300' : 'text-white/80'}`}>
+                  <span className={`font-black mr-2 shrink-0 text-sm ${isMe ? 'text-green-300' : 'text-white/80'}`}>
                     {guessText}
                   </span>
                 </div>

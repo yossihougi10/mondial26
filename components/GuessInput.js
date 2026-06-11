@@ -35,69 +35,61 @@ export default function GuessInput({ match, initialGuess, userId, onGuessChange 
     const hasExact = guess?.predicted_home_score !== null && guess?.predicted_home_score !== undefined
     const hasGuess = hasDirection || hasExact
     return (
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center gap-2">
         <span className="text-white/20 text-xs">🔒</span>
         {hasGuess ? (
-          <span className="font-bold text-white/70 bg-white/8 px-2.5 py-1 rounded-lg text-sm">
+          <span className="font-black text-white/70 px-3 py-1 rounded-lg text-sm"
+            style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.10)' }}>
             {hasDirection
               ? guess.prediction
-              : `${guess.predicted_home_score} - ${guess.predicted_away_score}`}
+              : `${guess.predicted_home_score} – ${guess.predicted_away_score}`}
           </span>
         ) : (
-          <span className="text-white/25 text-xs">לא ניחשת</span>
+          <span className="text-[#94A3B8]/50 text-xs">לא ניחשת</span>
         )}
       </div>
     )
   }
 
   return (
-    <div className="space-y-2">
-      {/* בורר מצב */}
-      <div className="flex gap-0.5 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)' }}>
+    <div className="space-y-2.5">
+      {/* Mode toggle */}
+      <div className="mode-toggle">
         <button onClick={() => setMode('direction')}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
-            mode === 'direction'
-              ? 'bg-green-500 text-white shadow-md shadow-green-500/20'
-              : 'text-white/40 hover:text-white/70'
-          }`}>
+          className={`mode-tab${mode === 'direction' ? ' mode-tab-active' : ''}`}>
           1 / X / 2
         </button>
         <button onClick={() => setMode('exact')}
-          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
-            mode === 'exact'
-              ? 'bg-green-500 text-white shadow-md shadow-green-500/20'
-              : 'text-white/40 hover:text-white/70'
-          }`}>
+          className={`mode-tab${mode === 'exact' ? ' mode-tab-active' : ''}`}>
           תוצאה מדויקת
         </button>
       </div>
 
-      {mode === 'direction' ? (
-        <DirectionInput guess={guess} saving={saving} onSave={saveGuess} />
-      ) : (
-        <ExactScoreInput guess={guess} saving={saving} onSave={saveGuess} onSetGuess={setGuess} />
-      )}
+      {mode === 'direction'
+        ? <DirectionInput guess={guess} saving={saving} onSave={saveGuess} />
+        : <ExactScoreInput guess={guess} saving={saving} onSave={saveGuess} onSetGuess={setGuess} />
+      }
     </div>
   )
 }
 
 function DirectionInput({ guess, saving, onSave }) {
+  const labels = ['בית', 'תיקו', 'אורח']
   return (
-    <div className="space-y-1.5">
+    <div>
       <div className="flex gap-2">
         {['1', 'X', '2'].map(opt => (
           <button key={opt} disabled={saving} onClick={() => onSave({ prediction: opt })}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${
-              guess?.prediction === opt
-                ? 'bg-green-500 text-white shadow-lg shadow-green-500/30 scale-105'
-                : 'bg-white/8 text-white/60 border border-white/10 hover:bg-white/15 hover:text-white hover:border-white/20'
-            }`}>
+            className={`btn-pick${guess?.prediction === opt ? ' btn-pick-active' : ''}`}>
             {opt}
           </button>
         ))}
       </div>
-      <div className="flex gap-2 text-xs text-white/25 px-0.5">
-        {['בית', 'תיקו', 'אורח'].map(l => <span key={l} className="flex-1 text-center">{l}</span>)}
+      <div className="flex gap-2 mt-1.5 px-0.5">
+        {labels.map(l => (
+          <span key={l} className="flex-1 text-center text-[10px] font-medium"
+            style={{ color:'rgba(148,163,184,0.50)' }}>{l}</span>
+        ))}
       </div>
     </div>
   )
@@ -123,16 +115,16 @@ function ExactScoreInput({ guess, saving, onSave, onSetGuess }) {
   }
 
   return (
-    <div className="flex items-center gap-3 justify-center">
-      <input type="number" min="0" max="20" value={homeVal} onChange={e => handleChange('home', e.target.value)}
-        disabled={saving}
-        className="w-14 h-12 text-center text-xl font-black bg-white/8 border-2 border-white/15 rounded-xl text-white focus:border-green-500 focus:bg-green-500/10 focus:outline-none transition-all"
-        placeholder="0" />
-      <span className="text-white/30 font-bold text-lg">—</span>
-      <input type="number" min="0" max="20" value={awayVal} onChange={e => handleChange('away', e.target.value)}
-        disabled={saving}
-        className="w-14 h-12 text-center text-xl font-black bg-white/8 border-2 border-white/15 rounded-xl text-white focus:border-green-500 focus:bg-green-500/10 focus:outline-none transition-all"
-        placeholder="0" />
+    <div className="flex items-center justify-center gap-3 py-0.5">
+      <input type="number" min="0" max="20" value={homeVal}
+        onChange={e => handleChange('home', e.target.value)}
+        disabled={saving} placeholder="0"
+        className="score-input" />
+      <span className="font-black text-[#94A3B8]/40 text-xl select-none">—</span>
+      <input type="number" min="0" max="20" value={awayVal}
+        onChange={e => handleChange('away', e.target.value)}
+        disabled={saving} placeholder="0"
+        className="score-input" />
     </div>
   )
 }

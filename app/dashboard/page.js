@@ -26,15 +26,15 @@ function formatDayLabel(dateStr) {
 
 export default function DashboardPage() {
   const supabase = createClient()
-  const [loading, setLoading] = useState(true)
-  const [profile, setProfile] = useState(null)
-  const [matches, setMatches] = useState([])
-  const [guesses, setGuesses] = useState([])
-  const [allGuesses, setAllGuesses] = useState([])
-  const [profiles, setProfiles] = useState([])
-  const [scores, setScores] = useState([])
+  const [loading, setLoading]         = useState(true)
+  const [profile, setProfile]         = useState(null)
+  const [matches, setMatches]         = useState([])
+  const [guesses, setGuesses]         = useState([])
+  const [allGuesses, setAllGuesses]   = useState([])
+  const [profiles, setProfiles]       = useState([])
+  const [scores, setScores]           = useState([])
   const [selectedDate, setSelectedDate] = useState(null)
-  const [userId, setUserId] = useState(null)
+  const [userId, setUserId]           = useState(null)
 
   const loadData = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -90,14 +90,14 @@ export default function DashboardPage() {
     : matches
 
   const hasLive = matches.some(m => m.status === 'IN_PLAY' || m.status === 'PAUSED')
-  const today = getTodayKey()
+  const today   = getTodayKey()
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4" style={{ animation: 'float 1s ease-in-out infinite' }}>⚽</div>
-          <p className="text-white/40">טוען...</p>
+        <div className="text-center space-y-3">
+          <div className="text-6xl" style={{ animation:'float 1s ease-in-out infinite' }}>⚽</div>
+          <p className="text-sm font-medium text-[#94A3B8]/60">טוען את המשחקים...</p>
         </div>
       </div>
     )
@@ -106,43 +106,51 @@ export default function DashboardPage() {
   return (
     <>
       <Navbar profile={profile} onSyncMatches={loadData} />
-      <main className="max-w-2xl mx-auto px-3 py-5">
-        {/* כותרת */}
-        <div className="mb-5 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-black text-white">לוח המשחקים</h1>
-            {hasLive && (
-              <div className="flex items-center gap-2 mt-1">
-                <span className="live-dot w-2 h-2 bg-red-500 rounded-full inline-block" />
-                <span className="text-sm text-red-400 font-medium">יש משחק חי עכשיו!</span>
-              </div>
-            )}
+      <main className="max-w-2xl mx-auto px-3 py-6">
+
+        {/* ── Page header ──────────────────────────── */}
+        <div className="mb-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-[26px] font-black text-white leading-tight">לוח המשחקים</h1>
+              <p className="text-sm font-medium mt-0.5" style={{ color:'#94A3B8' }}>
+                בחרו את התוצאות שאתם חושבים שיקרו
+              </p>
+            </div>
+            <div className="text-4xl mt-1">🏟️</div>
           </div>
-          <div className="text-3xl">🏟️</div>
+          {hasLive && (
+            <div className="flex items-center gap-2 mt-3 px-3 py-2 rounded-xl w-fit"
+              style={{ background:'rgba(239,68,68,0.10)', border:'1px solid rgba(239,68,68,0.25)' }}>
+              <span className="live-dot w-2 h-2 bg-red-500 rounded-full inline-block" />
+              <span className="text-sm font-bold text-red-400">משחק בשידור חי עכשיו!</span>
+            </div>
+          )}
         </div>
 
-        {/* תאריכים */}
+        {/* ── Date chips ────────────────────────────── */}
         {allDates.length > 0 && (
           <div className="flex gap-2 overflow-x-auto pb-2 mb-5 -mx-3 px-3 no-scrollbar">
             {allDates.map(date => {
-              const isToday = date === today
+              const isToday    = date === today
               const isSelected = date === selectedDate
               const dateMatches = matches.filter(m =>
-                new Date(m.utc_date).toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' }) === date
+                new Date(m.utc_date).toLocaleDateString('en-CA', { timeZone:'Asia/Jerusalem' }) === date
               )
               const hasLiveDate = dateMatches.some(m => m.status === 'IN_PLAY' || m.status === 'PAUSED')
 
               return (
                 <button key={date} onClick={() => setSelectedDate(date)}
-                  className={`shrink-0 relative px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                    isSelected
-                      ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
-                      : 'glass border border-white/10 text-white/60 hover:text-white hover:border-white/20'
-                  }`}>
-                  {isToday && <span className="text-xs block leading-none mb-0.5 opacity-70">היום</span>}
+                  className={`date-chip relative${isSelected ? ' date-chip-active' : ''}`}>
+                  {isToday && (
+                    <span className="block text-[9px] font-black tracking-wide uppercase mb-0.5 opacity-70">
+                      היום
+                    </span>
+                  )}
                   <span>{formatDayLabel(date)}</span>
                   {hasLiveDate && (
-                    <span className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#080c18] live-dot" />
+                    <span className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2"
+                      style={{ borderColor:'#050B16' }} />
                   )}
                 </button>
               )
@@ -150,13 +158,13 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* משחקים */}
+        {/* ── Match list ───────────────────────────── */}
         {displayedMatches.length === 0 ? (
-          <div className="text-center py-16 text-white/30">
+          <div className="text-center py-20 text-[#94A3B8]/40">
             <p className="text-5xl mb-4">📅</p>
-            <p>אין משחקים בתאריך זה</p>
+            <p className="font-medium">אין משחקים בתאריך זה</p>
             {matches.length === 0 && profile?.is_admin && (
-              <p className="text-sm mt-2 text-white/20">לחץ על "סנכרן" בתפריט לטעינת לוח המשחקים</p>
+              <p className="text-sm mt-2 text-[#94A3B8]/30">לחץ על "סנכרן" בתפריט לטעינת לוח המשחקים</p>
             )}
           </div>
         ) : (
@@ -165,7 +173,8 @@ export default function DashboardPage() {
               <MatchCard key={match.id} match={match}
                 userGuess={guesses.find(g => g.match_id === match.id)}
                 allGuesses={allGuesses.filter(g => g.match_id === match.id)}
-                profiles={profiles} userId={userId} onGuessChange={handleGuessChange}
+                profiles={profiles} userId={userId}
+                onGuessChange={handleGuessChange}
                 userScore={scores.find(s => s.match_id === match.id)}
               />
             ))}
