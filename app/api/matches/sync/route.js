@@ -2,30 +2,35 @@ import { createAdminClient, createServerClient } from '@/lib/supabase/server'
 import { fetchAllMatches, transformMatch } from '@/lib/football-api'
 import { calculatePoints, getResultType } from '@/lib/scoring'
 
-export async function POST(request) {
-  // Vercel Cron Secret או בדיקת session אדמין
+async function checkAuth(request) {
   const authHeader = request.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET
 
-  let authorized = false
+  if (cronSecret && authHeader === `Bearer ${cronSecret}`) return true
 
-  if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
-    authorized = true
-  } else {
-    // בדיקת session (קריאה מה-UI)
-    const serverSupabase = createServerClient()
-    const { data: { user } } = await serverSupabase.auth.getUser()
-    if (user?.email === process.env.ADMIN_EMAIL) authorized = true
-    else {
-      const { data: prof } = await serverSupabase.from('profiles').select('is_admin').eq('id', user?.id || '').single()
-      if (prof?.is_admin) authorized = true
-    }
-  }
+  const serverSupabase = createServerClient()
+  const { data: { user } } = await serverSupabase.auth.getUser()
+  if (user?.email === process.env.ADMIN_EMAIL) return true
+  const { data: prof } = await serverSupabase.from('profiles').select('is_admin').eq('id', user?.id || '').single()
+  return !!prof?.is_admin
+}
 
-  if (!authorized) {
+// GET — לקרון אוטומטי (cron-job.org / Vercel Cron)
+export async function GET(request) {
+  if (!(await checkAuth(request))) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  return runSync()
+}
 
+export async function POST(request) {
+  if (!(await checkAuth(request))) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  return runSync()
+}
+
+async function runSync() {
   const supabase = createAdminClient()
 
   try {
@@ -37,7 +42,6 @@ export async function POST(request) {
 
     const transformed = apiMatches.map(transformMatch)
 
-    // Upsert matches
     const { error: upsertError } = await supabase
       .from('matches')
       .upsert(transformed, { onConflict: 'id' })
@@ -47,7 +51,6 @@ export async function POST(request) {
       return Response.json({ error: upsertError.message }, { status: 500 })
     }
 
-    // נעל ניחושים למשחקים שהתחילו
     const startedIds = transformed
       .filter(m => ['IN_PLAY', 'PAUSED', 'FINISHED', 'AWARDED'].includes(m.status))
       .map(m => m.id)
@@ -60,7 +63,6 @@ export async function POST(request) {
         .eq('is_locked', false)
     }
 
-    // חשב ניקוד למשחקים שהסתיימו
     const finishedMatches = transformed.filter(m =>
       ['FINISHED', 'AWARDED'].includes(m.status) &&
       m.home_score_full !== null
